@@ -42,7 +42,6 @@ import dlib
 import os 
 import numpy as np
 import cv2
-# from .openface_align import AlignDlib
 
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -128,7 +127,6 @@ class cnn_FD:
 
         self.detector = dlib.cnn_face_detection_model_v1(fd_dat)
         self.predictor = dlib.shape_predictor(landmarks_dat)
-        # self.aligner = AlignDlib(landmarks_dat)
         self.detector_upsampling = upsampling
         self.max_n = max_n
         # warm up
