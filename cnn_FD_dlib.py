@@ -42,7 +42,7 @@ import dlib
 import os 
 import numpy as np
 import cv2
-from .openface_align import AlignDlib
+# from .openface_align import AlignDlib
 
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -128,7 +128,7 @@ class cnn_FD:
 
         self.detector = dlib.cnn_face_detection_model_v1(fd_dat)
         self.predictor = dlib.shape_predictor(landmarks_dat)
-        self.aligner = AlignDlib(landmarks_dat)
+        # self.aligner = AlignDlib(landmarks_dat)
         self.detector_upsampling = upsampling
         self.max_n = max_n
         # warm up
@@ -244,18 +244,22 @@ class cnn_FD:
     #         self.i+=1
     #     return aligned_faces
 
+    # def detect_align_faces(self, img3chnl, imgDim=96, num_face=None):
+    #     mmod_bbs = self._detect(img3chnl)
+    #     if mmod_bbs is None or len(mmod_bbs)==0:
+    #         return [], []
+
+    #     if self.max_n is not None:
+    #         mmod_bbs = sorted(mmod_bbs, key=lambda mmod_bb: mmod_bb.rect.width() * mmod_bb.rect.height(), reverse=True)[:self.max_n]
+
+    #     aligned_faces = self._align(img3chnl, mmod_bbs, imgDim)
+    #     # aligned_faces = [self._align_one_68(img3chnl, mmod_bb.rect, imgDim, INNER_EYES_AND_BOTTOM_LIP) for mmod_bb in mmod_bbs]
+
+    #     return mmod2bbs(mmod_bbs), aligned_faces
+
     def detect_align_faces(self, img3chnl, imgDim=96, num_face=None):
-        mmod_bbs = self._detect(img3chnl)
-        if mmod_bbs is None or len(mmod_bbs)==0:
-            return [], []
-
-        if self.max_n is not None:
-            mmod_bbs = sorted(mmod_bbs, key=lambda mmod_bb: mmod_bb.rect.width() * mmod_bb.rect.height(), reverse=True)[:self.max_n]
-
-        aligned_faces = self._align(img3chnl, mmod_bbs, imgDim)
-        # aligned_faces = [self._align_one_68(img3chnl, mmod_bb.rect, imgDim, INNER_EYES_AND_BOTTOM_LIP) for mmod_bb in mmod_bbs]
-
-        return mmod2bbs(mmod_bbs), aligned_faces
+        all_bbs, all_aligned_faces = self.detect_align_faces_batch([img3chnl])
+        return all_bbs[0], all_aligned_faces[0]
 
     def detect_align_faces_batch(self, img3chnls, imgDim=96, num_face=None):
         all_mmod_bbs = self._detect_batch(img3chnls)
