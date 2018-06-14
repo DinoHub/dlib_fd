@@ -135,7 +135,7 @@ class cnn_FD:
         print("FACE DETECTION: dlib's CNN FD object initalised")
 
     # As of dlib version 19.10.0, detector can work on a batch of images.
-    def _detect(self, img3chnl):
+    def detect(self, img3chnl):
         '''
         :return: array of modd_rect, each containing confidence & rect in [(l,t),(r,b)] format.
         '''
@@ -143,11 +143,10 @@ class cnn_FD:
         
         try:
             mmod_bbs = self.detector(img3chnl, self.detector_upsampling)
-
             # mmod_bbs are array of mmod_bb, each contains confidence & rect
             return mmod_bbs
         except Exception as e:
-            print("WARNING from FD _detect: {}".format(e))
+            print("WARNING from FD detect: {}".format(e))
             # import inspect
             # for i in inspect.getmembers( self.detector ):
             #     print(i)
