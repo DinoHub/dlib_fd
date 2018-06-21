@@ -105,14 +105,6 @@ INNER_EYES_AND_BOTTOM_LIP = [39, 42, 57]
 OUTER_EYES_AND_NOSE = [36, 45, 33]
 
 class cnn_FD:
-    '''
-    1) Face detection:
-        - get_allFaceBBs
-        - get_largestFaceBBs
-    2) Align faces:
-        - get_landmarks
-        - align
-    '''
     def __init__(self, fd_dat=None, landmarks_dat=None, upsampling=0, max_n =None ):
         if fd_dat is None:
             fd_dat = os.path.join(CURR_DIR, "mmod_human_face_detector.dat")
