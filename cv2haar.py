@@ -112,7 +112,7 @@ class cv2haar_FD:
             except Exception as e:
                 print("WARNING from FD detect_batch: {}".format(e))
                 all_bbs.append([])
-        print(all_bbs)
+        # print(all_bbs)
         return all_bbs
 
     def detect_align_faces_batch(self, img3chnls, imgDim=96, num_face=None):
@@ -132,7 +132,7 @@ class cv2haar_FD:
 
             all_bbs.append(cvbbs2bbs(bbs))
             all_aligned_faces.append(aligned_faces)
-        print(all_bbs)
+        # print(all_bbs)
         return all_bbs, all_aligned_faces
 
     def _align(self,img3chnl, bb, imgDim):
