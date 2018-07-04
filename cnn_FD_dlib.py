@@ -42,6 +42,7 @@ import dlib
 import os 
 import numpy as np
 import cv2
+import time
 
 CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -188,15 +189,28 @@ class cnn_FD:
     #     aligned_face = self.aligner.align(imgDim, img3chnl, bb = bb_rect)
     #     return aligned_face
 
-    def _align(self,img3chnl, bb_rect, imgDim):
-        # aligned_face = self.aligner.align(imgDim, img3chnl, bb = bb_rect)
-        points = self.predictor(img3chnl, bb_rect)
+    def align_getLM(self, img3chnl, bb, imgDim):
+        points = self.predictor(img3chnl, bb.rect)
         landmarks = list(map(lambda p:(p.x, p.y), points.parts()))
         npLandmarks = np.float32(landmarks)
         npLandmarksIndices = np.array(INNER_EYES_AND_BOTTOM_LIP) #landmark indices = INNER_EYES_AND_BOTTOM_LIP
         H = cv2.getAffineTransform(npLandmarks[npLandmarksIndices],
                                    imgDim * MINMAX_TEMPLATE[npLandmarksIndices])
         aligned_face = cv2.warpAffine(img3chnl, H, (imgDim, imgDim))
+        return aligned_face, landmarks
+
+    def align(self, img3chnl, bb, imgDim):
+        # aligned_face = self.aligner.align(imgDim, img3chnl, bb = bb_rect)
+        # start = time.time()
+        points = self.predictor(img3chnl, bb.rect)
+        # mid = time.time()
+        landmarks = list(map(lambda p:(p.x, p.y), points.parts()))
+        npLandmarks = np.float32(landmarks)
+        npLandmarksIndices = np.array(INNER_EYES_AND_BOTTOM_LIP) #landmark indices = INNER_EYES_AND_BOTTOM_LIP
+        H = cv2.getAffineTransform(npLandmarks[npLandmarksIndices],
+                                   imgDim * MINMAX_TEMPLATE[npLandmarksIndices])
+        aligned_face = cv2.warpAffine(img3chnl, H, (imgDim, imgDim))
+        # print('Time taken for pred:{}, for affine:{}'.format(mid - start, time.time()-mid))
         return aligned_face
 
     def _align_batch(self, img3chnl, bbs, imgDim):
@@ -207,7 +221,7 @@ class cnn_FD:
         assert bbs is not None, 'Landmark predictor didnt rcv bb'
         aligned_faces = []
         for bb in bbs:
-            aligned_face = self._align(img3chnl, bb.rect, imgDim)
+            aligned_face = self.align(img3chnl, bb, imgDim)
             # cv2.imwrite('1/aligned_{}.jpg'.format(self.i), aligned_face)
             # cv2.imwrite('img.jpg', img3chnl)
             aligned_faces.append(aligned_face)

@@ -135,7 +135,18 @@ class cv2haar_FD:
         # print(all_bbs)
         return all_bbs, all_aligned_faces
 
-    def _align(self,img3chnl, bb, imgDim):
+    def align_getLM(self,img3chnl, bb, imgDim):
+        bb_rect = cvbb2dlibrect(bb)
+        points = self.predictor(img3chnl, bb_rect)
+        landmarks = list(map(lambda p:(p.x, p.y), points.parts()))
+        npLandmarks = np.float32(landmarks)
+        npLandmarksIndices = np.array(INNER_EYES_AND_BOTTOM_LIP) #landmark indices = INNER_EYES_AND_BOTTOM_LIP
+        H = cv2.getAffineTransform(npLandmarks[npLandmarksIndices],
+                                   imgDim * MINMAX_TEMPLATE[npLandmarksIndices])
+        aligned_face = cv2.warpAffine(img3chnl, H, (imgDim, imgDim))
+        return aligned_face, landmarks
+
+    def align(self,img3chnl, bb, imgDim):
         bb_rect = cvbb2dlibrect(bb)
         points = self.predictor(img3chnl, bb_rect)
         landmarks = list(map(lambda p:(p.x, p.y), points.parts()))
@@ -154,7 +165,7 @@ class cv2haar_FD:
         assert bbs is not None, 'Landmark predictor didnt rcv bb'
         aligned_faces = []
         for bb in bbs:
-            aligned_face = self._align(img3chnl, bb, imgDim)
+            aligned_face = self.align(img3chnl, bb, imgDim)
             # cv2.imwrite('1/aligned_{}.jpg'.format(self.i), aligned_face)
             # cv2.imwrite('img.jpg', img3chnl)
             aligned_faces.append(aligned_face)
