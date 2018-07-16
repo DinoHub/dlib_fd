@@ -16,24 +16,6 @@ def bb2dlibrect(bb):
                           right=int(bb['rect']['r']), 
                           bottom=int(bb['rect']['b']))
 
-# def cvbbs2bbs(cv_bbs):
-#     '''
-#     Converts cv's bbs to bbs
-#     '''
-#     bbs = []
-#     for cv_bb in cv_bbs:
-#         x,y,w,h = cv_bb
-#         bb = {'rect':{'t': y, 
-#                       'l': x, 
-#                       'r': x+w, 
-#                       'b': y+h, 
-#                       'w': w, 
-#                       'h': h},
-#               # 'confidence': dlib_rect.confidence}
-#               'confidence': 1.0} #haar does not give confidence, so just assume 1.0
-#         bbs.append(bb)
-#     return bbs
-            
 TEMPLATE68 = np.float32([
         (0.0792396913815, 0.339223741112), (0.0829219487236, 0.456955367943),
         (0.0967927109165, 0.575648016728), (0.122141515615, 0.691921601066),
