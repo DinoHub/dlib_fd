@@ -26,8 +26,20 @@ def cvbbs2bbs(cv_bbs):
               'confidence': 1.0} #haar does not give confidence, so just assume 1.0
         bbs.append(bb)
     return bbs
+            
+# TEMPLATE5 = np.float32([
+#         (0.224152, 0.2119465), (0.75610125, 0.2119465),
+#         (0.490127, 0.628106), (0.254149, 0.780233),
+#         (0.726104, 0.780233)])
 
-TEMPLATE = np.float32([
+# TPL_MIN, TPL_MAX = np.min(TEMPLATE5, axis=0), np.max(TEMPLATE5, axis=0)
+# MINMAX_TEMPLATE5 = (TEMPLATE5 - TPL_MIN) / (TPL_MAX - TPL_MIN)
+
+# #: Landmark indices.
+# # ALL5_EYES_NOSE_LIPS = [0,1,2,3,4]
+# EYES_NOSE = [0,1,2]
+
+TEMPLATE68 = np.float32([
         (0.0792396913815, 0.339223741112), (0.0829219487236, 0.456955367943),
         (0.0967927109165, 0.575648016728), (0.122141515615, 0.691921601066),
         (0.168687863544, 0.800341263616), (0.239789390707, 0.895732504778),
@@ -63,13 +75,12 @@ TEMPLATE = np.float32([
         (0.672409137852, 0.744177032192), (0.572539621444, 0.776609286626),
         (0.5240106503, 0.783370783245), (0.477561227414, 0.778476346951)])
 
-TPL_MIN, TPL_MAX = np.min(TEMPLATE, axis=0), np.max(TEMPLATE, axis=0)
-MINMAX_TEMPLATE = (TEMPLATE - TPL_MIN) / (TPL_MAX - TPL_MIN)
+TPL_MIN, TPL_MAX = np.min(TEMPLATE68, axis=0), np.max(TEMPLATE68, axis=0)
+MINMAX_TEMPLATE68 = (TEMPLATE68 - TPL_MIN) / (TPL_MAX - TPL_MIN)
 
 #: Landmark indices.
-INNER_EYES_AND_BOTTOM_LIP = [39, 42, 57]
-OUTER_EYES_AND_NOSE = [36, 45, 33]
-
+INNER_EYES_AND_BOTTOM_LIP68 = [39, 42, 57]
+OUTER_EYES_AND_NOSE68 = [36, 45, 33]
 
 class cv2haar_FD:
     def __init__(self, fd_xml=None, landmarks_dat=None, scaleFactor=1.1, minNeighbors=8, max_n=None, upsampling=None):
@@ -127,7 +138,7 @@ class cv2haar_FD:
                     bbs = sorted(bbs, key=lambda bb: bb[2]*bb[3],# width*height
                                  reverse=True)[:self.max_n]
                 aligned_faces = self._align_batch(img3chnls[i], bbs, imgDim)
-                # aligned_faces = [self._align_one_68(img3chnls[i], mmod_bb.rect, imgDim, INNER_EYES_AND_BOTTOM_LIP) for mmod_bb in bbs]
+                # aligned_faces = [self._align_one_68(img3chnls[i], mmod_bb.rect, imgDim, INNER_EYES_AND_BOTTOM_LIP68) for mmod_bb in bbs]
 
 
             all_bbs.append(cvbbs2bbs(bbs))
@@ -135,14 +146,25 @@ class cv2haar_FD:
         # print(all_bbs)
         return all_bbs, all_aligned_faces
 
+    # def align_getLM5(self,img3chnl, landmarks, imgDim):
+    #     # bb_rect = cvbb2dlibrect(bb)
+    #     # points = self.predictor(img3chnl, bb_rect)
+    #     # landmarks = list(map(lambda p:(p.x, p.y), points.parts()))
+    #     npLandmarks = np.float32(landmarks)
+    #     npLandmarksIndices = np.array(EYES_NOSE) 
+    #     H = cv2.getAffineTransform(npLandmarks[npLandmarksIndices],
+    #                                imgDim * MINMAX_TEMPLATE5[npLandmarksIndices])
+    #     aligned_face = cv2.warpAffine(img3chnl, H, (imgDim, imgDim))
+    #     return aligned_face, landmarks
+
     def align_getLM(self,img3chnl, bb, imgDim):
         bb_rect = cvbb2dlibrect(bb)
         points = self.predictor(img3chnl, bb_rect)
         landmarks = list(map(lambda p:(p.x, p.y), points.parts()))
         npLandmarks = np.float32(landmarks)
-        npLandmarksIndices = np.array(INNER_EYES_AND_BOTTOM_LIP) #landmark indices = INNER_EYES_AND_BOTTOM_LIP
+        npLandmarksIndices = np.array(INNER_EYES_AND_BOTTOM_LIP68) #landmark indices = INNER_EYES_AND_BOTTOM_LIP68
         H = cv2.getAffineTransform(npLandmarks[npLandmarksIndices],
-                                   imgDim * MINMAX_TEMPLATE[npLandmarksIndices])
+                                   imgDim * MINMAX_TEMPLATE68[npLandmarksIndices])
         aligned_face = cv2.warpAffine(img3chnl, H, (imgDim, imgDim))
         return aligned_face, landmarks
 
@@ -151,9 +173,9 @@ class cv2haar_FD:
         points = self.predictor(img3chnl, bb_rect)
         landmarks = list(map(lambda p:(p.x, p.y), points.parts()))
         npLandmarks = np.float32(landmarks)
-        npLandmarksIndices = np.array(INNER_EYES_AND_BOTTOM_LIP) #landmark indices = INNER_EYES_AND_BOTTOM_LIP
+        npLandmarksIndices = np.array(INNER_EYES_AND_BOTTOM_LIP68) #landmark indices = INNER_EYES_AND_BOTTOM_LIP68
         H = cv2.getAffineTransform(npLandmarks[npLandmarksIndices],
-                                   imgDim * MINMAX_TEMPLATE[npLandmarksIndices])
+                                   imgDim * MINMAX_TEMPLATE68[npLandmarksIndices])
         aligned_face = cv2.warpAffine(img3chnl, H, (imgDim, imgDim))
         return aligned_face
 
