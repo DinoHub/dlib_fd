@@ -170,24 +170,6 @@ class cnn_FD:
                 all_mmod_bbs.append([])
         return all_mmod_bbs
 
-    # def _detect_batch(self, img3chnls):
-    #     '''
-    #     :return: array of modd_rect, each containing confidence & rect in [(l,t),(r,b)] format.
-
-    #     Calls the batch version of detector()
-    #     '''
-    #     assert img3chnls is not None,'FD didnt rcv img'
-    #     all_mmod_bbs = []
-    #     try:
-    #         all_mmod_bbs = list( self.detector( img3chnls, self.detector_upsampling ) )
-    #     except Exception as e:
-    #         print("WARNING from FD: {}".format(e))
-    #         all_mmod_bbs.extend([ [] for _ in range(len(img3chnls)) ])
-    #     return all_mmod_bbs
-
-    # def _align(self,img3chnl, bb_rect, imgDim):
-    #     aligned_face = self.aligner.align(imgDim, img3chnl, bb = bb_rect)
-    #     return aligned_face
 
     def align_getLM(self, img3chnl, bb, imgDim):
         points = self.predictor(img3chnl, bb.rect)
@@ -227,38 +209,6 @@ class cnn_FD:
             aligned_faces.append(aligned_face)
             self.i+=1
         return aligned_faces
-
-    #old align that does not does affine transformation, merely uprights the face.
-    # def _align_batch2(self, img3chnl, bbs, imgDim):
-    #     '''
-    #     For batch faces
-    #     '''
-    #     assert img3chnl is not None, 'Landmark predictor didnt rcv img'
-    #     assert bbs is not None, 'Landmark predictor didnt rcv bb'
-    #     faces = dlib.full_object_detections()
-    #     for bb in bbs:
-    #         # print(self.predictor(img3chnl, bb.rect).rect)
-    #         faces.append(self.predictor(img3chnl, bb.rect))
-    #         # faces.append(self.predictor(img3chnl, bb))    
-    #     aligned_faces = dlib.get_face_chips(img3chnl, faces, size=imgDim)
-    #     cv2.imwrite('img.jpg', img3chnl)
-    #     for face in aligned_faces:
-    #         cv2.imwrite('2/aligned2_{}.jpg'.format(self.i), face)
-    #         self.i+=1
-    #     return aligned_faces
-
-    # def detect_align_faces(self, img3chnl, imgDim=96, num_face=None):
-    #     mmod_bbs = self._detect(img3chnl)
-    #     if mmod_bbs is None or len(mmod_bbs)==0:
-    #         return [], []
-
-    #     if self.max_n is not None:
-    #         mmod_bbs = sorted(mmod_bbs, key=lambda mmod_bb: mmod_bb.rect.width() * mmod_bb.rect.height(), reverse=True)[:self.max_n]
-
-    #     aligned_faces = self._align(img3chnl, mmod_bbs, imgDim)
-    #     # aligned_faces = [self._align_one_68(img3chnl, mmod_bb.rect, imgDim, INNER_EYES_AND_BOTTOM_LIP) for mmod_bb in mmod_bbs]
-
-    #     return mmod2bbs(mmod_bbs), aligned_faces
 
     def detect_align_faces(self, img3chnl, imgDim=96, num_face=None):
         all_bbs, all_aligned_faces = self.detect_align_faces_batch([img3chnl])
@@ -300,75 +250,6 @@ class cnn_FD:
         return aligned_face
 
 
-    # def get_allFaceBBs(self, img3chnl):
-    #     '''
-    #     :return: array of modd_rect, each containing confidence & rect in [(l,t),(r,b)] format.
-    #     '''
-    #     assert img3chnl is not None,'FD didnt rcv img'
-        
-    #     try:
-    #         mmod_bbs = self.detector(img3chnl, self.detector_upsampling)
-    #         # mmod_bbs are array of mmod_bb, each contains confidence & rect
-    #         bbs = mmod2bbs(mmod_bbs)
-    #         return bbs
-    #     except Exception as e:
-    #         print("Warning from FD: {}".format(e))
-    #         return []
-
-    # def get_largestFaceBBs(self, img3chnl, skipMulti=False):
-    #     assert img3chnl is not None,'FD didnt rcv img'
-
-    #     bbs = self.get_allFaceBBs(img3chnl)
-
-    #     if (not skipMulti and len(bbs) > 0) or len(bbs) == 1:
-    #         return max(bbs, key=lambda bb: bb['rect']['w'] * bb['rect']['h'])
-    #     else:
-    #         return None
-
-
-    # def get_landmarks(self, img3chnl, bb):
-    #     assert img3chnl is not None, 'Landmark predictor didnt rcv img'
-    #     assert bb is not None, 'Landmark predictor didnt bb'
-
-    #     points = self.predictor(img3chnl, bb)
-    #     return list(map(lambda p:(p.x, p.y), points.parts()))
-
-    # def align(self, img3chnl, imgDim=96, bb=None, landmarks=None, landmarkIndices=INNER_EYES_AND_BOTTOM_LIP, skipMulti=False):
-    #     '''
-    #     :param imgDim: The square edge length face is resized to
-    #     :type imgDim: int
-    #     :param img3chnl: shape (height, width, 3)
-    #     :param skipMulti: skip image if more than one face detected
-    #     :return: Align RGB image. shape (imgDim, imgDim, 3)
-
-    #     '''
-    #     assert imgDim is not None, 'imgDim not given to align'
-    #     assert img3chnl is not None, 'img3chnl not given to align'
-    #     assert landmarkIndices is not None, 'landmarkIndices not given to align'
-
-    #     if bb is None:
-    #         bb = self.get_largestFaceBBs(img3chnl, skipMulti)
-    #         if bb is None:
-    #             return None
-
-    #     if landmarks is None:
-    #         landmarks = self.get_landmarks(img3chnl, bb.rect)
-
-    #     npLandmarks = np.float32(landmarks)
-    #     npLandmarksIndices = np.array(landmarkIndices)
-    #     H = cv2.getAffineTransform(npLandmarks[npLandmarksIndices],
-    #                                imgDim * MINMAX_TEMPLATE[npLandmarksIndices])
-    #     thumbnail = cv2.warpAffine(img3chnl, H, (imgDim, imgDim))
-    #     return thumbnail
-
-    # def align_faces(self, img3chnl, bbs):
-    #     faces = []
-    #     for bb in bbs:
-    #         faces.append(self.align(img3chnl, bb=bb))
-    #     return faces
-
-
-##########
 
 
 if __name__ == "__main__":
@@ -459,3 +340,127 @@ if __name__ == "__main__":
     #     win.set_image(img)
     #     win.add_overlay(rects)
     #     dlib.hit_enter_to_continue()
+
+
+
+    
+    # def _detect_batch(self, img3chnls):
+    #     '''
+    #     :return: array of modd_rect, each containing confidence & rect in [(l,t),(r,b)] format.
+
+    #     Calls the batch version of detector()
+    #     '''
+    #     assert img3chnls is not None,'FD didnt rcv img'
+    #     all_mmod_bbs = []
+    #     try:
+    #         all_mmod_bbs = list( self.detector( img3chnls, self.detector_upsampling ) )
+    #     except Exception as e:
+    #         print("WARNING from FD: {}".format(e))
+    #         all_mmod_bbs.extend([ [] for _ in range(len(img3chnls)) ])
+    #     return all_mmod_bbs
+
+    # def _align(self,img3chnl, bb_rect, imgDim):
+    #     aligned_face = self.aligner.align(imgDim, img3chnl, bb = bb_rect)
+    #     return aligned_face
+    
+    #old align that does not does affine transformation, merely uprights the face.
+    # def _align_batch2(self, img3chnl, bbs, imgDim):
+    #     '''
+    #     For batch faces
+    #     '''
+    #     assert img3chnl is not None, 'Landmark predictor didnt rcv img'
+    #     assert bbs is not None, 'Landmark predictor didnt rcv bb'
+    #     faces = dlib.full_object_detections()
+    #     for bb in bbs:
+    #         # print(self.predictor(img3chnl, bb.rect).rect)
+    #         faces.append(self.predictor(img3chnl, bb.rect))
+    #         # faces.append(self.predictor(img3chnl, bb))    
+    #     aligned_faces = dlib.get_face_chips(img3chnl, faces, size=imgDim)
+    #     cv2.imwrite('img.jpg', img3chnl)
+    #     for face in aligned_faces:
+    #         cv2.imwrite('2/aligned2_{}.jpg'.format(self.i), face)
+    #         self.i+=1
+    #     return aligned_faces
+
+    # def detect_align_faces(self, img3chnl, imgDim=96, num_face=None):
+    #     mmod_bbs = self._detect(img3chnl)
+    #     if mmod_bbs is None or len(mmod_bbs)==0:
+    #         return [], []
+
+    #     if self.max_n is not None:
+    #         mmod_bbs = sorted(mmod_bbs, key=lambda mmod_bb: mmod_bb.rect.width() * mmod_bb.rect.height(), reverse=True)[:self.max_n]
+
+    #     aligned_faces = self._align(img3chnl, mmod_bbs, imgDim)
+    #     # aligned_faces = [self._align_one_68(img3chnl, mmod_bb.rect, imgDim, INNER_EYES_AND_BOTTOM_LIP) for mmod_bb in mmod_bbs]
+
+    #     return mmod2bbs(mmod_bbs), aligned_faces
+
+    # def get_allFaceBBs(self, img3chnl):
+    #     '''
+    #     :return: array of modd_rect, each containing confidence & rect in [(l,t),(r,b)] format.
+    #     '''
+    #     assert img3chnl is not None,'FD didnt rcv img'
+        
+    #     try:
+    #         mmod_bbs = self.detector(img3chnl, self.detector_upsampling)
+    #         # mmod_bbs are array of mmod_bb, each contains confidence & rect
+    #         bbs = mmod2bbs(mmod_bbs)
+    #         return bbs
+    #     except Exception as e:
+    #         print("Warning from FD: {}".format(e))
+    #         return []
+
+    # def get_largestFaceBBs(self, img3chnl, skipMulti=False):
+    #     assert img3chnl is not None,'FD didnt rcv img'
+
+    #     bbs = self.get_allFaceBBs(img3chnl)
+
+    #     if (not skipMulti and len(bbs) > 0) or len(bbs) == 1:
+    #         return max(bbs, key=lambda bb: bb['rect']['w'] * bb['rect']['h'])
+    #     else:
+    #         return None
+
+
+    # def get_landmarks(self, img3chnl, bb):
+    #     assert img3chnl is not None, 'Landmark predictor didnt rcv img'
+    #     assert bb is not None, 'Landmark predictor didnt bb'
+
+    #     points = self.predictor(img3chnl, bb)
+    #     return list(map(lambda p:(p.x, p.y), points.parts()))
+
+    # def align(self, img3chnl, imgDim=96, bb=None, landmarks=None, landmarkIndices=INNER_EYES_AND_BOTTOM_LIP, skipMulti=False):
+    #     '''
+    #     :param imgDim: The square edge length face is resized to
+    #     :type imgDim: int
+    #     :param img3chnl: shape (height, width, 3)
+    #     :param skipMulti: skip image if more than one face detected
+    #     :return: Align RGB image. shape (imgDim, imgDim, 3)
+
+    #     '''
+    #     assert imgDim is not None, 'imgDim not given to align'
+    #     assert img3chnl is not None, 'img3chnl not given to align'
+    #     assert landmarkIndices is not None, 'landmarkIndices not given to align'
+
+    #     if bb is None:
+    #         bb = self.get_largestFaceBBs(img3chnl, skipMulti)
+    #         if bb is None:
+    #             return None
+
+    #     if landmarks is None:
+    #         landmarks = self.get_landmarks(img3chnl, bb.rect)
+
+    #     npLandmarks = np.float32(landmarks)
+    #     npLandmarksIndices = np.array(landmarkIndices)
+    #     H = cv2.getAffineTransform(npLandmarks[npLandmarksIndices],
+    #                                imgDim * MINMAX_TEMPLATE[npLandmarksIndices])
+    #     thumbnail = cv2.warpAffine(img3chnl, H, (imgDim, imgDim))
+    #     return thumbnail
+
+    # def align_faces(self, img3chnl, bbs):
+    #     faces = []
+    #     for bb in bbs:
+    #         faces.append(self.align(img3chnl, bb=bb))
+    #     return faces
+
+
+##########
