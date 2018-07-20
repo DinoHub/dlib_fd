@@ -146,6 +146,20 @@ class cnn_FD:
             # print( dir(self.detector) )
             return []
 
+    def detect_bb(self, img3chnl):
+        '''
+        return: bbs, list of bb = {'rect':{'t':mmod_bb.rect.top(), 
+                                           'l':mmod_bb.rect.left(),
+                                           'r':mmod_bb.rect.right(),
+                                           'b':mmod_bb.rect.bottom(), 
+                                           'w':mmod_bb.rect.width(), 
+                                           'h':mmod_bb.rect.height()},
+                                   'confidence': mmod_bb.confidence}
+        '''
+        mmod_bbs = self.detect(img3chnl)
+        return mmod2bbs(mmod_bbs)
+
+
     def _detect_batch(self, img3chnls):
         '''
         :return: array of modd_rect, each containing confidence & rect in [(l,t),(r,b)] format.
@@ -343,7 +357,7 @@ if __name__ == "__main__":
 
 
 
-    
+
     # def _detect_batch(self, img3chnls):
     #     '''
     #     :return: array of modd_rect, each containing confidence & rect in [(l,t),(r,b)] format.
