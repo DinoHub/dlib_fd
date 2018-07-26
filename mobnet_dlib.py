@@ -19,7 +19,7 @@ def read_label_map(csv_path):
     return label_map
 
 class Mobnet_TF(object):
-    def __init__(self, fd_pb, label_csv, threshold=0.5):
+    def __init__(self, fd_pb, label_csv, gpu_usage=None, threshold=0.5):
         """Tensorflow detector
         """
         self.detection_graph = tf.Graph()
@@ -32,7 +32,12 @@ class Mobnet_TF(object):
 
         with self.detection_graph.as_default():
             config = tf.ConfigProto()
-            config.gpu_options.allow_growth = True
+            if gpu_usage is None:
+                config.gpu_options.allow_growth = True
+                print('Initalising Mobilenet SSD FD at unlimited gpu usage (allow_growth)..')
+            else:
+                config.gpu_options.per_process_gpu_memory_fraction = gpu_usage
+                print('Initalising Mobilenet SSD FD at {} gpu usage..')
             self.sess = tf.Session(graph=self.detection_graph, config=config)
             self.windowNotSet = True
         
@@ -148,7 +153,7 @@ def bb2dlibrect(bb):
                           bottom=int(bb['rect']['b']))
 
 class Mobnet_FD:
-    def __init__(self, fd_pb=None, label_csv=None, landmarks_dat=None, max_n =None, **kwargs):
+    def __init__(self, fd_pb=None, label_csv=None, landmarks_dat=None, gpu_usage=None, max_n =None, **kwargs):
         if fd_pb is None:
             fd_pb = os.path.join(CURR_DIR, "mobnet_frozen_graph.pb")
             assert os.path.exists(fd_pb),'{} does not exist'.format(fd_pb)
@@ -162,7 +167,7 @@ class Mobnet_FD:
             # landmarks_dat = os.path.join(CURR_DIR, 'shape_predictor_5_face_landmarks.dat')
             assert os.path.exists(landmarks_dat),'{} does not exists'.format(landmarks_dat)
 
-        self.detector = Mobnet_TF(fd_pb, label_csv)
+        self.detector = Mobnet_TF(fd_pb, label_csv, gpu_usage=gpu_usage)
         self.predictor = dlib.shape_predictor(landmarks_dat)
         self.max_n = max_n
         # warm up
