@@ -89,12 +89,12 @@ class Mobnet_TF(object):
         classes = self.detection_graph.get_tensor_by_name('detection_classes:0')
         num_detections = self.detection_graph.get_tensor_by_name('num_detections:0')
         # Actual detection.
-        start_time = time.time()
+        # start_time = time.time()
         (boxes, scores, classes, _) = self.sess.run(
             [boxes, scores, classes, num_detections],
             feed_dict={image_tensor: image_np_expanded})
-        elapsed_time = time.time() - start_time
-        print('inference time cost: {}'.format(elapsed_time))
+        # elapsed_time = time.time() - start_time
+        # print('inference time cost: {}'.format(elapsed_time))
 
         return self._post_process(np.squeeze(boxes), np.squeeze(scores), np.squeeze(classes), im_size)
 
@@ -140,6 +140,12 @@ MINMAX_TEMPLATE = (TEMPLATE - TPL_MIN) / (TPL_MAX - TPL_MIN)
 #: Landmark indices.
 INNER_EYES_AND_BOTTOM_LIP = [39, 42, 57]
 OUTER_EYES_AND_NOSE = [36, 45, 33]
+
+def bb2dlibrect(bb):
+    return dlib.rectangle(left=int(bb['rect']['l']), 
+                          top=int(bb['rect']['t']), 
+                          right=int(bb['rect']['r']), 
+                          bottom=int(bb['rect']['b']))
 
 class Mobnet_FD:
     def __init__(self, fd_pb=None, label_csv=None, landmarks_dat=None, max_n =None, **kwargs):
@@ -199,9 +205,9 @@ class Mobnet_FD:
                 all_bbs.append([])
         return all_bbs
 
-    def align(self, img3chnl, bb, imgDim):
+    def align(self, img3chnl, bb_dlib_rect, imgDim):
         # start = time.time()
-        points = self.predictor(img3chnl, bb['rect'])
+        points = self.predictor(img3chnl, bb_dlib_rect)
         # mid = time.time()
         landmarks = list(map(lambda p:(p.x, p.y), points.parts()))
         npLandmarks = np.float32(landmarks)
@@ -215,12 +221,13 @@ class Mobnet_FD:
     def _align_batch(self, img3chnl, bbs, imgDim):
         '''
         For batch faces
+        bbs: list of bb, not dlib rect yet
         '''
         assert img3chnl is not None, 'Landmark predictor didnt rcv img'
         assert bbs is not None, 'Landmark predictor didnt rcv bb'
         aligned_faces = []
         for bb in bbs:
-            aligned_face = self.align(img3chnl, bb, imgDim)
+            aligned_face = self.align(img3chnl, bb2dlibrect(bb), imgDim)
             # cv2.imwrite('1/aligned_{}.jpg'.format(self.i), aligned_face)
             # cv2.imwrite('img.jpg', img3chnl)
             aligned_faces.append(aligned_face)
@@ -236,13 +243,12 @@ class Mobnet_FD:
                 aligned_faces = []                
             else:
                 if self.max_n is not None:
-                    bbs = sorted(bbs, key=lambda bb: bb['rect']['width'] * bb['rect']['height'], reverse=True)[:self.max_n]
-                    all_bbs_less.append(bbs)
+                    # print(bbs)
+                    bbs = sorted(bbs, key=lambda bb: bb['rect']['w'] * bb['rect']['h'], reverse=True)[:self.max_n]
                 aligned_faces = self._align_batch(img3chnls[i], bbs, imgDim)
             
             all_aligned_faces.append(aligned_faces)
-        if self.max_n is None:
-            all_bbs_less = all_bbs
+            all_bbs_less.append(bbs)
         return all_bbs_less, all_aligned_faces
 
     def detect_align_faces(self, img3chnl, imgDim=96, num_face=None):
