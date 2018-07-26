@@ -192,6 +192,12 @@ class Mobnet_FD:
         except Exception as e:
             print("WARNING from FD detect: {}".format(e))
             return []
+
+    def detect_bb(self, img3chnl):
+        '''
+        pass through fn for enrol2phone.py
+        '''
+        return self.detect(img3chnl)        
     
     def _detect_batch(self, img3chnls):
         '''
