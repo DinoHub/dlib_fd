@@ -30,7 +30,6 @@ class Mobnet_TF(object):
                 od_graph_def.ParseFromString(serialized_graph)
                 tf.import_graph_def(od_graph_def, name='')
 
-        with self.detection_graph.as_default():
             config = tf.ConfigProto()
             if gpu_usage is None:
                 config.gpu_options.allow_growth = True
