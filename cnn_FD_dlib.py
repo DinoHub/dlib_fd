@@ -106,7 +106,7 @@ INNER_EYES_AND_BOTTOM_LIP = [39, 42, 57]
 OUTER_EYES_AND_NOSE = [36, 45, 33]
 
 class cnn_FD:
-    def __init__(self, fd_dat=None, landmarks_dat=None, upsampling=0, max_n =None, **kwargs):
+    def __init__(self, fd_dat=None, landmarks_dat=None, upsampling=0, max_n =None, img_size=96, **kwargs):
         if fd_dat is None:
             fd_dat = os.path.join(CURR_DIR, "mmod_human_face_detector.dat")
             assert os.path.exists(fd_dat),'{} does not exist'.format(fd_dat)
@@ -125,6 +125,7 @@ class cnn_FD:
         # warm up
         self.detector(np.zeros((10,10,3), dtype=np.uint8),0)
         self.i = 0
+        self.img_size = img_size
         print("FACE DETECTION: dlib's CNN FD object initalised")
 
     # As of dlib version 19.10.0, detector can work on a batch of images.
@@ -185,17 +186,21 @@ class cnn_FD:
         return all_mmod_bbs
 
 
-    def align_getLM(self, img3chnl, bb, imgDim):
+    def align_getLM(self, img3chnl, bb, imgDim=None):
         points = self.predictor(img3chnl, bb.rect)
         landmarks = list(map(lambda p:(p.x, p.y), points.parts()))
         npLandmarks = np.float32(landmarks)
         npLandmarksIndices = np.array(INNER_EYES_AND_BOTTOM_LIP) #landmark indices = INNER_EYES_AND_BOTTOM_LIP
+        if imgDim is None:
+            imgDim = self.img_size
         H = cv2.getAffineTransform(npLandmarks[npLandmarksIndices],
                                    imgDim * MINMAX_TEMPLATE[npLandmarksIndices])
         aligned_face = cv2.warpAffine(img3chnl, H, (imgDim, imgDim))
         return aligned_face, landmarks
 
-    def align(self, img3chnl, bb, imgDim):
+    def align(self, img3chnl, bb, imgDim=None):
+        if imgDim is None:
+            imgDim = self.img_size
         # aligned_face = self.aligner.align(imgDim, img3chnl, bb = bb_rect)
         # start = time.time()
         points = self.predictor(img3chnl, bb.rect)
@@ -209,10 +214,12 @@ class cnn_FD:
         # print('Time taken for pred:{}, for affine:{}'.format(mid - start, time.time()-mid))
         return aligned_face
 
-    def _align_batch(self, img3chnl, bbs, imgDim):
+    def _align_batch(self, img3chnl, bbs, imgDim=None):
         '''
         For batch faces
         '''
+        if imgDim is None:
+            imgDim = self.img_size
         assert img3chnl is not None, 'Landmark predictor didnt rcv img'
         assert bbs is not None, 'Landmark predictor didnt rcv bb'
         aligned_faces = []
@@ -224,11 +231,13 @@ class cnn_FD:
             self.i+=1
         return aligned_faces
 
-    def detect_align_faces(self, img3chnl, imgDim=96, num_face=None):
+    def detect_align_faces(self, img3chnl):
         all_bbs, all_aligned_faces = self.detect_align_faces_batch([img3chnl])
         return all_bbs[0], all_aligned_faces[0]
 
-    def detect_align_faces_batch(self, img3chnls, imgDim=96, num_face=None):
+    def detect_align_faces_batch(self, img3chnls, imgDim=None):
+        if imgDim is None:
+            imgDim = self.img_size
         all_mmod_bbs = self._detect_batch(img3chnls)
         all_aligned_faces = []
         all_bbs = []
