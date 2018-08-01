@@ -22,13 +22,14 @@ class Mobnet_TF(object):
     def __init__(self, fd_pb, label_csv, gpu_usage=None, threshold=0.5):
         """Tensorflow detector
         """
+        self.frozen_graph = fd_pb
         self.detection_graph = tf.Graph()
         with self.detection_graph.as_default():
-            od_graph_def = tf.GraphDef()
+            self.graphDef = tf.GraphDef()
             with tf.gfile.GFile(fd_pb, 'rb') as fid:
                 serialized_graph = fid.read()
-                od_graph_def.ParseFromString(serialized_graph)
-                tf.import_graph_def(od_graph_def, name='')
+                self.graphDef.ParseFromString(serialized_graph)
+                tf.import_graph_def(self.graphDef, name='')
 
             config = tf.ConfigProto()
             if gpu_usage is None:
@@ -36,9 +37,9 @@ class Mobnet_TF(object):
                 print('Initalising Mobilenet SSD FD at unlimited gpu usage (allow_growth)..')
             else:
                 config.gpu_options.per_process_gpu_memory_fraction = gpu_usage
-                print('Initalising Mobilenet SSD FD at {} gpu usage..')
+                print('Initalising Mobilenet SSD FD at {} gpu usage..'.format(gpu_usage))
             self.sess = tf.Session(graph=self.detection_graph, config=config)
-            self.windowNotSet = True
+            # self.windowNotSet = True
         
         self.label_map = read_label_map(label_csv)
         self.threshold = threshold
