@@ -263,7 +263,7 @@ class Mobnet_FD:
         return all_bbs_less, all_aligned_faces
 
     def detect_align_faces(self, img3chnl, imgDim=96, num_face=None):
-        all_bbs, all_aligned_faces = self.detect_align_faces_batch([img3chnl])
+        all_bbs, all_aligned_faces = self.detect_align_faces_batch([img3chnl], imgDim=imgDim)
         return all_bbs[0], all_aligned_faces[0]
 
 
