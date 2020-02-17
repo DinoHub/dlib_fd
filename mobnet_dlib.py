@@ -153,7 +153,7 @@ def bb2dlibrect(bb):
                           bottom=int(bb['rect']['b']))
 
 class Mobnet_FD:
-    def __init__(self, fd_pb=None, label_csv=None, landmarks_dat=None, gpu_usage=None, max_n =None, **kwargs):
+    def __init__(self, fd_pb=None, label_csv=None, landmarks_dat=None, gpu_usage=None, max_n =None, fd_threshold=0.5, **kwargs):
         if fd_pb is None:
             fd_pb = os.path.join(CURR_DIR, "mobnet_frozen_graph.pb")
             assert os.path.exists(fd_pb),'{} does not exist'.format(fd_pb)
@@ -167,7 +167,7 @@ class Mobnet_FD:
             # landmarks_dat = os.path.join(CURR_DIR, 'shape_predictor_5_face_landmarks.dat')
             assert os.path.exists(landmarks_dat),'{} does not exists'.format(landmarks_dat)
 
-        self.detector = Mobnet_TF(fd_pb, label_csv, gpu_usage=gpu_usage)
+        self.detector = Mobnet_TF(fd_pb, label_csv, threshold=fd_threshold, gpu_usage=gpu_usage)
         self.predictor = dlib.shape_predictor(landmarks_dat)
         self.max_n = max_n
         # warm up
